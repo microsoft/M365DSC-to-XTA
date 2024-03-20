@@ -9,7 +9,11 @@
 
         [Parameter()]
         [System.String]
-        $Content
+        $Content,
+
+        [Parameter()]
+        [System.Boolean]
+        $Compress = $true
     )
     # Initialization - Skip 
     $Global:M365DSCSkipDependenciesValidation = $true
@@ -31,7 +35,8 @@
 
     # Use the DSCParser to convert the file's content into an array of
     # PowerShell objects (Hashtables).
-    $parsedContent = ConvertTo-DSCObject -Content $Content
+    $parsedContent = ConvertTo-DSCObject -Content $Content `
+                                         -IncludeCIMInstanceInfo $false
 
     # Loop through all the resources and convert them to XTA
     $allResources = @()
@@ -47,10 +52,17 @@
 
             $resource.Remove("ResourceInstanceName") | Out-Null
             $resource.Remove("ResourceName") | Out-Null
+            $resource.Remove("Credential") | Out-Null
+            $resource.Remove("ApplicationId") | Out-Null
+            $resource.Remove("TenantId") | Out-Null
+            $resource.Remove("CertificateThumbprint") | Out-Null
+            $resource.Remove("ApplicationSecret") | Out-Null
+            $resource.Remove("CertificatePath") | Out-Null
+            $resource.Remove("CertificatePassword") | Out-Null
             $currentResource.Add("properties", $resource)
             $allResources += $currentResource
         }
     }
     $template.Resources = $allResources
-    return (ConvertTo-Json $template -Depth 99)
+    return (ConvertTo-Json $template -Depth 99 -Compress:$Compress)
 }
