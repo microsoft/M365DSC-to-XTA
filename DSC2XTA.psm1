@@ -46,8 +46,8 @@
         if (-not [System.String]::IsNullOrEmpty($mappedNamespace))
         {
             $currentResource = @{
-                name = $resource.ResourceInstanceName
-                type = $mappedNamespace
+                displayname = $resource.ResourceInstanceName
+                resourceType = $mappedNamespace
             }
 
             $resource.Remove("ResourceInstanceName") | Out-Null
