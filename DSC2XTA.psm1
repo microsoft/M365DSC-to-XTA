@@ -28,7 +28,7 @@
 
 }
 
-function Parse-XTAProperty
+function Format-XTAProperty
 {
     [CmdletBinding()]
     [OutputType([System.String])]
@@ -47,29 +47,47 @@ function Parse-XTAProperty
         # matches params of the type : [parameters('FQDN')] where the parameter value is used as a single value.
         if ($Property -eq $variable)
         {
-            $Property = "[parameters($($variable.Substring(1)))]"
+            $Property = "[parameters('$($variable.Substring(1))')]"
             return $Property
         }
     }
 
     # matches params of the type : [concat('admin_', parameters('FQDN'), '@', parameters('Domain'), '.com')] where the parameter value is used within a list.
+    # Replace all variables with ,parameters('variableName'), and then split the string by ',' and then join the string with concat
     $hasVariable = $false
     foreach($variable in $Variables) 
     {
         $hasVariable = $hasVariable -or $Property.Contains($variable)
 
-        $property = $Property -replace $variable, ",parameters($($variable.Substring(1))),"
+        # Replace doesn't work well with special characters, so we need to escape special characters the variable
+        $escapedVariable = [regex]::Escape($variable)
+        $property = $Property -replace $escapedVariable, ",parameters('$($variable.Substring(1))'),"
     }
 
     if($hasVariable)
     {
-        $property = "[concat($property)]"
+        $splits = @()
+        
+        $property.Split(",") | ForEach-Object {
+            if($_ -ne "")
+            {
+                if($_ -match "parameters\('(.*)'\)")
+                {
+                    $splits += $_
+                }
+                else
+                {
+                    $splits += "'$_'"
+                }
+            }
+        }
+        $property = "[concat($($splits -join ', '))]"
     }
 
     return $Property
 }
 
-function Parse-XTAProperties
+function Format-XTAProperties
 {
     [CmdletBinding()]
     [OutputType([System.Collections.Hashtable])]
@@ -92,11 +110,11 @@ function Parse-XTAProperties
 
         if ($value -is [System.String])
         {
-            $parsedValue = Parse-XTAProperty -Property $value -Variables $Variables
+            $parsedValue = Format-XTAProperty -Property $value -Variables $Variables
         }
         elseif ($value -is [System.Collections.Hashtable])
         {
-            $parsedValue = Parse-XTAProperties -Resource $value -Variables $Variables
+            $parsedValue = Format-XTAProperties -Resource $value -Variables $Variables
         }
         elseif ($value -is [System.Collections.ArrayList])
         {
@@ -105,12 +123,12 @@ function Parse-XTAProperties
             {
                 if ($item -is [System.String])
                 {
-                    $parsedItem = Parse-XTAProperty -Property $item -Variables $Variables
+                    $parsedItem = Format-XTAProperty -Property $item -Variables $Variables
                     $parsedValue += $parsedItem
                 }
                 elseif ($item -is [System.Collections.Hashtable])
                 {
-                    $parsedItem = Parse-XTAProperties -Resource $item -Variables $Variables
+                    $parsedItem = Format-XTAProperties -Resource $item -Variables $Variables
                     $parsedValue += $parsedItem
                 }
             }
@@ -165,6 +183,17 @@ function ConvertFrom-DSCToXTA
     # Get all the variables used in the DSC configuration
     $variables = Get-DSCVariables -Content $Content
 
+    # Add the variables as parameters to the XTA template
+    foreach ($variable in $variables)
+    {
+        $variableName = $variable.Substring(1)
+        $template.Parameters += @{
+            displayName = $variableName
+            description = "The declaration of variable $variable."
+            parameterType = "String"
+        }
+    }
+
     # Loop through all the resources and convert them to XTA
     $allResources = @()
     foreach ($resource in $parsedContent)
@@ -187,7 +216,7 @@ function ConvertFrom-DSCToXTA
             $resource.Remove("CertificatePath") | Out-Null
             $resource.Remove("CertificatePassword") | Out-Null
 
-            $resource = Parse-XTAProperties -Resource $resource -Variables $variables
+            $resource = Format-XTAProperties -Resource $resource -Variables $variables
 
             $currentResource.Add("properties", $resource)
             $allResources += $currentResource
