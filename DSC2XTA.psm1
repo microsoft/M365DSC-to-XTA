@@ -223,5 +223,6 @@ function ConvertFrom-DSCToXTA
         }
     }
     $template.Resources = $allResources
-    return (ConvertTo-Json $template -Depth 99 -Compress:$Compress)
+    $json = (ConvertTo-Json $template -Depth 99 -Compress:$Compress)
+    return [regex]::Unescape($json) 
 }
