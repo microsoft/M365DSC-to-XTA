@@ -21,7 +21,7 @@
         }
     }
 
-    $variablesToExclude = @('$null', '$false', '$true')
+    $variablesToExclude = @('$null', '$false', '$true', '$_')
 
     # sort variable by length descending to avoid partial matches
     return $variables | Where-Object { $_ -notin $variablesToExclude } | Select-Object -Unique | Sort-Object -Property Length -Descending
