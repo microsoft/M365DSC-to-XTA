@@ -3,6 +3,9 @@
     "metadata": {
 	"description": "Converted from Microsoft365DSC."
     },
-    "parameters": {},
+    "id": "XTATemplate",
+    "displayName": "XTATemplate",
+    "description": "XTATemplate",
+    "parameters": [],
     "resources": []
 }
