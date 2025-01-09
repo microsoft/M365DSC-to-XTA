@@ -1,8 +1,6 @@
 {
-    "$schema": "https://raw.githubusercontent.com/PowerShell/DSC/main/schemas/2023/08/config/document.json",
-    "metadata": {
-	"description": "Converted from Microsoft365DSC."
-    },
-    "parameters": {},
+    "displayName": "Sample XTA Baseline",
+    "description": "Description of the XTA Baseline",
+    "parameters": [],
     "resources": []
 }
