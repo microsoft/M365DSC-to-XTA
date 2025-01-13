@@ -157,6 +157,14 @@ function ConvertFrom-DSCToXTA
         [System.Boolean]
         $Compress = $false
     )
+    Write-Warning "
+        Please note that the script doesn’t support converting Microsoft365DSC files that:
+            1. Include PowerShell conditional logic (if/else),
+            2. Include PowerShell looping logic (for/while),
+            3. Is made up of DSC Composites (https://learn.microsoft.com/en-us/powershell/dsc/resources/authoringresourcecomposite?view=dsc-1.1)
+            4. Include non string variables, or
+            5. Include null values in the configuration
+    "
     # Initialization - Skip 
     $Global:M365DSCSkipDependenciesValidation = $true
 
