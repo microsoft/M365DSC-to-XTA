@@ -232,5 +232,5 @@ function ConvertFrom-DSCToXTA
     }
     $template.Resources = $allResources
     $json = (ConvertTo-Json $template -Depth 99 -Compress:$Compress)
-    return [regex]::Unescape($json) 
+    return $json.Replace("\u0027", "'")
 }
