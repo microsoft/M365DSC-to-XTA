@@ -116,7 +116,7 @@ function Format-XTAProperties
         {
             $parsedValue = Format-XTAProperties -Resource $value -Variables $Variables
         }
-        elseif ($value -is [System.Collections.ArrayList])
+        elseif ($value -is [System.Collections.ArrayList] -or $value -is [System.Array] -or $value -is [System.Collections.Generic.List[System.Object]])
         {
             $parsedValue = @()
             foreach ($item in $value)
