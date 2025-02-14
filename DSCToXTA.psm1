@@ -209,8 +209,16 @@ function ConvertFrom-DSCToXTA
         $mappedNamespace = $mappings.($resource.ResourceName)
         if (-not [System.String]::IsNullOrEmpty($mappedNamespace))
         {
+            $ResourceInstanceName = $resource.ResourceInstanceName
+            foreach ($Variable in $Variables) {
+                if ($ResourceInstanceName -like "*$Variable*") {
+                    $ResourceInstanceName  = Format-XTAProperty `
+                        -Property $ResourceInstanceName -Variables $Variable
+                    break
+                }
+            }
             $currentResource = @{
-                displayname = $resource.ResourceInstanceName
+                displayname = $ResourceInstanceName
                 resourceType = $mappedNamespace
             }
 
