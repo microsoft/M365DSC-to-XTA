@@ -45,7 +45,7 @@ function Format-XTAProperty
     foreach($variable in $Variables)
     {
         # matches params of the type : [parameters('FQDN')] where the parameter value is used as a single value.
-        if ($Property -eq $variable)
+        if (($Property -eq $variable) -or ($Property -eq "`$($variable)"))
         {
             $Property = "[parameters('$($variable.Substring(1))')]"
             return $Property
@@ -60,6 +60,10 @@ function Format-XTAProperty
         $hasVariable = $hasVariable -or $Property.Contains($variable)
 
         # Replace doesn't work well with special characters, so we need to escape special characters the variable
+        $bracketVariable = "`$($variable)"
+        $escapedBracketVariable = [regex]::Escape($bracketVariable)
+        $property = $Property -replace $escapedBracketVariable, ",parameters('$($variable.Substring(1))'),"
+
         $escapedVariable = [regex]::Escape($variable)
         $property = $Property -replace $escapedVariable, ",parameters('$($variable.Substring(1))'),"
     }
