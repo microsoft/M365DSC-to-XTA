@@ -155,7 +155,11 @@ function ConvertFrom-DSCToXTA
 
         [Parameter()]
         [System.Boolean]
-        $Compress = $false
+        $Compress = $false,
+
+        [Parameter()]
+        [System.Boolean]
+        $Parameterize = $true
     )
     Write-Warning "
         Please note that the script doesn’t support converting Microsoft365DSC files that:
@@ -210,17 +214,6 @@ function ConvertFrom-DSCToXTA
         if (-not [System.String]::IsNullOrEmpty($mappedNamespace))
         {
             $ResourceInstanceName = $resource.ResourceInstanceName
-            foreach ($Variable in $Variables) {
-                if ($ResourceInstanceName -like "*$Variable*") {
-                    $ResourceInstanceName  = Format-XTAProperty `
-                        -Property $ResourceInstanceName -Variables $Variable
-                    break
-                }
-            }
-            $currentResource = @{
-                displayname = $ResourceInstanceName
-                resourceType = $mappedNamespace
-            }
 
             $resource.Remove("ResourceInstanceName") | Out-Null
             $resource.Remove("ResourceName") | Out-Null
@@ -232,8 +225,22 @@ function ConvertFrom-DSCToXTA
             $resource.Remove("CertificatePath") | Out-Null
             $resource.Remove("CertificatePassword") | Out-Null
 
-            $resource = Format-XTAProperties -Resource $resource -Variables $variables
+            if($Parameterize)
+            {
+                foreach ($Variable in $Variables) {
+                    if ($ResourceInstanceName -like "*$Variable*") {
+                        $ResourceInstanceName  = Format-XTAProperty `
+                        -Property $ResourceInstanceName -Variables $Variable
+                        break
+                    }
+                }
+                $resource = Format-XTAProperties -Resource $resource -Variables $variables
+            }
 
+            $currentResource = @{
+                displayname = $ResourceInstanceName
+                resourceType = $mappedNamespace
+            }
             $currentResource.Add("properties", $resource)
             $allResources += $currentResource
         }
